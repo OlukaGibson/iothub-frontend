@@ -104,3 +104,10 @@ For migration details and API mapping, see `FASTAPI_MIGRATION.md`.
 
 npm install
 npm run dev
+
+
+For questions or support, open an issue or contact the [Gibson Oluka](http://github.com/OlukaGibson)
+To reach me on other socials
+[x.com](https://x.com/OlsGibson)
+[youtube](https://www.youtube.com/@theemusicNmovies)
+[insta](https://www.instagram.com/olsgibson/)
