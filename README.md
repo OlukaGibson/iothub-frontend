@@ -102,8 +102,8 @@ MIT
 
 For migration details and API mapping, see `FASTAPI_MIGRATION.md`.
 
-npm install
-npm run dev
+npm install .
+npm run dev .
 
 
 For questions or support, open an issue or contact the [Gibson Oluka](http://github.com/OlukaGibson)
