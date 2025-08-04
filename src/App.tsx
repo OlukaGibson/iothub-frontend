@@ -36,16 +36,16 @@ const App = () => (
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/organisations" element={<OrganisationsPage />} />
-          <Route path="/devices" element={<DevicesPage />} />
-          <Route path="/device/:deviceID" element={<DeviceDetailPage />} />
-          <Route path="/profiles" element={<ProfilesPage />} />
-          <Route path="/profiles/:profileId/devices" element={<ProfileDevicesPage />} />
-          <Route path="/firmware" element={<FirmwarePage />} />
-          <Route path="/visualization" element={<VisualizationPage />} />
-          <Route path="/upload" element={<UploadPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+          <Route path="/organisations" element={<ProtectedRoute><OrganisationsPage /></ProtectedRoute>} />
+          <Route path="/devices" element={<ProtectedRoute><DevicesPage /></ProtectedRoute>} />
+          <Route path="/device/:deviceID" element={<ProtectedRoute><DeviceDetailPage /></ProtectedRoute>} />
+          <Route path="/profiles" element={<ProtectedRoute><ProfilesPage /></ProtectedRoute>} />
+          <Route path="/profiles/:profileId/devices" element={<ProtectedRoute><ProfileDevicesPage /></ProtectedRoute>} />
+          <Route path="/firmware" element={<ProtectedRoute><FirmwarePage /></ProtectedRoute>} />
+          <Route path="/visualization" element={<ProtectedRoute><VisualizationPage /></ProtectedRoute>} />
+          <Route path="/upload" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
