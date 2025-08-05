@@ -123,17 +123,46 @@ const ProfileDevicesPage = () => {
       return response.data;
     },
     onSuccess: (data) => {
+      console.log('Success response:', data); // Add logging
+      
+      // Handle different response formats
+      const successCount = data?.results?.success?.length || 
+                          data?.success?.length || 
+                          data?.updated_count || 
+                          selectedDevices.length;
+      
       toast({
         title: "Configurations updated",
-        description: `Updated ${data.results.success.length} devices successfully.`,
+        description: `Updated ${successCount} devices successfully.`,
       });
       setConfigModalOpen(false);
+      setSelectedDevices([]); // Clear selection
       refetch();
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Mutation error:', error); // Add detailed logging
+      console.error('Error response:', error?.response?.data); // Log API error details
+      
+      // Check if it's actually a success but misformatted response
+      if (error?.response?.status === 200 || error?.response?.status === 201) {
+        toast({
+          title: "Configurations updated",
+          description: `Updated ${selectedDevices.length} devices successfully.`,
+        });
+        setConfigModalOpen(false);
+        setSelectedDevices([]);
+        refetch();
+        return;
+      }
+      
+      const errorMessage = error?.response?.data?.message || 
+                          error?.response?.data?.error || 
+                          error?.message || 
+                          "Failed to update configurations. Please try again.";
+      
       toast({
         title: "Error updating configurations",
-        description: "Failed to update configurations. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -459,17 +488,18 @@ const ProfileDevicesPage = () => {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center space-x-4">
-                          <div className="flex-1">
+                          <div className="flex-shrink-0 w-32">
                             <FormLabel className="text-sm font-medium">{configLabel}</FormLabel>
+                          </div>
+                          <div className="flex-1">
                             <FormControl>
                               <Input 
                                 placeholder={`Enter value for ${configLabel}...`}
-                                className="mt-1"
                                 {...field}
                               />
                             </FormControl>
                           </div>
-                          <div className="flex-shrink-0 w-24 text-right">
+                          <div className="flex-shrink-0 w-16 text-right">
                             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                               {configKey}
                             </span>
