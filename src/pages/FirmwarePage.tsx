@@ -204,9 +204,20 @@ const FirmwarePage = () => {
       (firmware.description && firmware.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "N/A";
+    
+    try {
+      const date = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return "Invalid Date";
+      }
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "N/A";
+    }
   };
 
   const extractChanges = (changesObj: Record<string, string>) => {
@@ -230,12 +241,12 @@ const FirmwarePage = () => {
     }
   };
 
-  const showFirmwareDetails = async (firmwareVersion: string) => {
+  const showFirmwareDetails = async (firmwareId: string) => {
     setIsLoadingDetails(true);
     setDetailsDialog(true);
     
     try {
-      const response = await axios.get(`${config.API_BASE_URL}/firmware/${firmwareVersion}`);
+      const response = await axios.get(`${config.API_BASE_URL}/firmware/${firmwareId}`);
       setSelectedFirmware(response.data);
     } catch (err: any) {
       console.error("Error fetching firmware details:", err);
@@ -599,7 +610,7 @@ const FirmwarePage = () => {
                         <TableCell>
                           <div className="flex items-center text-gray-500">
                             <Clock className="h-4 w-4 mr-1" />
-                            N/A
+                            {formatDate(firmware.created_at)}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -629,7 +640,7 @@ const FirmwarePage = () => {
                             variant="ghost" 
                             size="sm" 
                             className="h-8"
-                            onClick={() => showFirmwareDetails(firmware.firmware_version)}
+                            onClick={() => showFirmwareDetails(firmware.id)}
                           >
                             <FileText className="h-4 w-4 mr-1" /> Details
                           </Button>
@@ -862,12 +873,12 @@ const FirmwarePage = () => {
                 
                 <div className="col-span-1 font-medium text-gray-500">Created</div>
                 <div className="col-span-3">
-                  N/A
+                  {formatDate(selectedFirmware.created_at)}
                 </div>
                 
                 <div className="col-span-1 font-medium text-gray-500">Updated</div>
                 <div className="col-span-3">
-                  N/A
+                  {formatDate(selectedFirmware.updated_at)}
                 </div>
                 
                 <div className="col-span-1 font-medium text-gray-500">Description</div>
