@@ -31,8 +31,8 @@ const Sidebar = () => {
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: <Home className="w-5 h-5" /> },
-    { name: "Devices", href: "/devices", icon: <Box className="w-5 h-5" /> },
     { name: "Profiles", href: "/profiles", icon: <Users className="w-5 h-5" /> },
+    { name: "Devices", href: "/devices", icon: <Box className="w-5 h-5" /> },
     { name: "Firmware", href: "/firmware", icon: <HardDrive className="w-5 h-5" /> },
     // { name: "Data Visualization", path: "/visualization", icon: <BarChart2 className="w-5 h-5" /> },
     // { name: "Upload", path: "/upload", icon: <Upload className="w-5 h-5" /> },
