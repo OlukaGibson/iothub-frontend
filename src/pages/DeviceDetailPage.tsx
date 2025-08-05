@@ -47,6 +47,7 @@ interface DeviceDetail {
   writekey: string;
   deviceID: number;
   profile: string;
+  profile_name: string;
   currentFirmwareVersion: string | null;
   targetFirmwareVersion: string | null;
   previousFirmwareVersion: string | null;
@@ -209,7 +210,20 @@ const DeviceDetailPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center">
-                    <div className="text-lg font-medium">{deviceData.profile || "Not set"}</div>
+                    <div className="text-lg font-medium">
+                      {deviceData.profile_name ? (
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto text-lg font-medium text-gray-800 hover:text-gray-600 no-underline hover:no-underline"
+                          onClick={() => navigate(`/profiles/${deviceData.profile}/devices`)}
+                        >
+                          {deviceData.profile_name}
+                          <ExternalLink className="h-4 w-4 ml-1" />
+                        </Button>
+                      ) : (
+                        "Not set"
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
