@@ -18,13 +18,13 @@ import { Label } from "@/components/ui/label";
 
 // Define interfaces for the device data
 interface DeviceMetadataEntry {
-  entryID: number;
+  entryID: string;
   created_at: string;
   [key: string]: any; // For field1, field2, etc.
 }
 
 interface DeviceConfigEntry {
-  entryID: number;
+  entryID: string;
   created_at: string;
   [key: string]: any; // For config1, config2, etc.
 }
@@ -40,22 +40,25 @@ interface DeviceProfile {
 }
 
 interface DeviceDetail {
-  id: number;
+  id: string;
   created_at: string;
   name: string;
   readkey: string;
   writekey: string;
-  deviceID: string;
-  profileID: number;
+  deviceID: number;
+  profile: string;
   currentFirmwareVersion: string | null;
   targetFirmwareVersion: string | null;
   previousFirmwareVersion: string | null;
   networkID: string;
-  fileDownloadState: string | null;
+  fileDownloadState: boolean | null;
+  firmwareDownloadState: string | null;
   device_data: DeviceMetadataEntry[];
   config_data: DeviceConfigEntry[];
-  meta_data: DeviceMetadataEntry[]; // Add the new meta_data field
-  profile: DeviceProfile;
+  meta_data: DeviceMetadataEntry[];
+  field_names: Record<string, string>;
+  config_names: Record<string, string>;
+  metadata_names: Record<string, string>;
 }
 
 const DeviceDetailPage = () => {
@@ -129,6 +132,24 @@ const DeviceDetailPage = () => {
     }
   };
   
+  // Helper function to get field definitions from actual data
+  const getFieldDefinitions = (dataEntries: DeviceMetadataEntry[], nameMapping?: Record<string, string>) => {
+    if (!dataEntries || dataEntries.length === 0) return {};
+    
+    const fieldDefs: Record<string, string> = {};
+    const sampleEntry = dataEntries[0];
+    
+    // Get all keys except entryID and created_at
+    Object.keys(sampleEntry).forEach(key => {
+      if (key !== 'entryID' && key !== 'created_at') {
+        // Use the provided name mapping if available, otherwise use a friendly generated name
+        fieldDefs[key] = nameMapping?.[key] || key.replace(/([a-z])([0-9])/i, '$1 $2').replace(/^./, str => str.toUpperCase());
+      }
+    });
+    
+    return fieldDefs;
+  };
+
   return (
     <Layout>
       <div className="mb-6">
@@ -188,13 +209,7 @@ const DeviceDetailPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center">
-                    <div className="text-lg font-medium">{deviceData.profile.name || "Not set"}</div>
-                    {/* {deviceData.profile && (
-                      <Button variant="ghost" size="sm" className="ml-2 h-8" 
-                        onClick={() => navigate(`/profiles/${deviceData.profileID}/devices`)}>
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    )} */}
+                    <div className="text-lg font-medium">{deviceData.profile || "Not set"}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -304,10 +319,12 @@ const DeviceDetailPage = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     {deviceData.device_data.length > 0 ? (
-                      <DeviceDataGraphs 
-                        dataEntries={deviceData.device_data} 
-                        fieldDefinitions={deviceData.profile?.fields || {}}
-                      />
+                      <div className="space-y-4">
+                        <DeviceDataGraphs 
+                          dataEntries={deviceData.device_data} 
+                          fieldDefinitions={getFieldDefinitions(deviceData.device_data, deviceData.field_names)}
+                        />
+                      </div>
                     ) : (
                       <div className="text-center py-10 text-gray-500">
                         <Activity className="h-10 w-10 mx-auto mb-2" />
@@ -328,10 +345,12 @@ const DeviceDetailPage = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     {deviceData.meta_data && deviceData.meta_data.length > 0 ? (
-                      <DeviceDataTable 
-                        dataEntries={deviceData.meta_data} 
-                        fieldDefinitions={deviceData.profile?.metadata || {}}
-                      />
+                      <div className="space-y-4">
+                        <DeviceDataTable 
+                          dataEntries={deviceData.meta_data} 
+                          fieldDefinitions={getFieldDefinitions(deviceData.meta_data, deviceData.metadata_names)}
+                        />
+                      </div>
                     ) : (
                       <div className="text-center py-10 text-gray-500">
                         <Box className="h-10 w-10 mx-auto mb-2" />
@@ -368,24 +387,10 @@ const DeviceDetailPage = () => {
                               </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
-                              {deviceData.profile && deviceData.profile.configs && 
-                                Object.entries(deviceData.profile.configs).map(([key, label]) => (
-                                  <div key={key} className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor={key} className="text-right">
-                                      {label}
-                                    </Label>
-                                    <Input
-                                      id={key}
-                                      className="col-span-3"
-                                      value={configValues[key] || ''}
-                                      onChange={(e) => setConfigValues({
-                                        ...configValues,
-                                        [key]: e.target.value
-                                      })}
-                                    />
-                                  </div>
-                                ))
-                              }
+                              {/* Since profile is now a string, we'll need to handle configs differently */}
+                              <div className="text-sm text-gray-600">
+                                Configuration update interface needs profile data to determine available configs.
+                              </div>
                             </div>
                             <DialogFooter>
                               <Button type="submit" disabled={isSubmittingConfig}>
@@ -404,10 +409,12 @@ const DeviceDetailPage = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     {deviceData.config_data.length > 0 ? (
-                      <DeviceDataTable 
-                        dataEntries={deviceData.config_data} 
-                        fieldDefinitions={deviceData.profile?.configs || {}}
-                      />
+                      <div className="space-y-4">
+                        <DeviceDataTable 
+                          dataEntries={deviceData.config_data} 
+                          fieldDefinitions={getFieldDefinitions(deviceData.config_data, deviceData.config_names)}
+                        />
+                      </div>
                     ) : (
                       <div className="text-center py-10 text-gray-500">
                         <Settings className="h-10 w-10 mx-auto mb-2" />

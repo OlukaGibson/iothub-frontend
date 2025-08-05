@@ -16,7 +16,7 @@ import {
 import { EyeOff, Eye, Info } from "lucide-react";
 
 interface DeviceEntry {
-  entryID: number;
+  entryID: string;
   created_at: string;
   [key: string]: any;
 }
