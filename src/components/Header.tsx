@@ -1,8 +1,8 @@
-
 import { Bell, Settings, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import config from "@/config";
 import {
@@ -17,6 +17,7 @@ import {
 const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -25,8 +26,8 @@ const Header = () => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear auth token and redirect regardless of API response
-      localStorage.removeItem('authToken');
+      // Clear auth state and redirect
+      logout();
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
@@ -55,7 +56,14 @@ const Header = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user?.email}</p>
+                {user?.is_admin && (
+                  <p className="text-xs leading-none text-muted-foreground">Administrator</p>
+                )}
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />

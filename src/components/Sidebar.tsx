@@ -1,5 +1,4 @@
-
-import { Link, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   Home, 
@@ -18,26 +17,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Sidebar = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { isAdmin } = useAuth();
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
 
-  const navItems = [
-    { name: "Dashboard", path: "/", icon: <Home className="w-5 h-5" /> },
-    { name: "Users", path: "/users", icon: <UserCheck className="w-5 h-5" /> },
-    { name: "Organisations", path: "/organisations", icon: <Building2 className="w-5 h-5" /> },
-    { name: "Devices", path: "/devices", icon: <Box className="w-5 h-5" /> },
-    { name: "Profiles", path: "/profiles", icon: <Users className="w-5 h-5" /> },
-    { name: "Firmware", path: "/firmware", icon: <HardDrive className="w-5 h-5" /> },
+  const navigation = [
+    { name: "Dashboard", href: "/", icon: <Home className="w-5 h-5" /> },
+    { name: "Devices", href: "/devices", icon: <Box className="w-5 h-5" /> },
+    { name: "Profiles", href: "/profiles", icon: <Users className="w-5 h-5" /> },
+    { name: "Firmware", href: "/firmware", icon: <HardDrive className="w-5 h-5" /> },
     // { name: "Data Visualization", path: "/visualization", icon: <BarChart2 className="w-5 h-5" /> },
     // { name: "Upload", path: "/upload", icon: <Upload className="w-5 h-5" /> },
     // { name: "Settings", path: "/settings", icon: <Settings className="w-5 h-5" /> },
+  ];
+
+  const adminNavigation = [
+    { name: "Users", href: "/users", icon: <UserCheck className="w-5 h-5" /> },
+    { name: "Organisations", href: "/organisations", icon: <Building2 className="w-5 h-5" /> },
   ];
 
   return (
@@ -69,22 +73,51 @@ const Sidebar = () => {
 
         <div className="p-4 flex-1 overflow-y-auto">
           <nav className="space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                  location.pathname === item.path
-                    ? "bg-iot-blue text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                )}
-                onClick={() => isMobile && setIsOpen(false)}
+            {navigation.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                className={({ isActive }) =>
+                  cn(
+                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
+                    isActive
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  )
+                }
               >
                 {item.icon}
-                <span className="ml-3">{item.name}</span>
-              </Link>
+                {item.name}
+              </NavLink>
             ))}
+
+            {isAdmin && (
+              <>
+                <div className="border-t border-gray-200 my-4"></div>
+                <div className="px-2 py-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Administration
+                  </p>
+                </div>
+                {adminNavigation.map((item) => (
+                  <NavLink
+                    key={item.name}
+                    to={item.href}
+                    className={({ isActive }) =>
+                      cn(
+                        "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
+                        isActive
+                          ? "bg-gray-100 text-gray-900"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      )
+                    }
+                  >
+                    {item.icon}
+                    {item.name}
+                  </NavLink>
+                ))}
+              </>
+            )}
           </nav>
         </div>
 
