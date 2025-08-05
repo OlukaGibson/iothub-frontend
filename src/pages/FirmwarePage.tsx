@@ -172,22 +172,27 @@ const FirmwarePage = () => {
     }
   };
 
-  const handleDownload = async (firmware: FirmwareVersion, fileType) => {
+  const handleDownload = async (firmware: FirmwareVersion, fileType: string) => {
     try {
-      if (fileType === "bootloader" && firmware.firmware_string_bootloader) {
-        window.open(`${config.API_BASE_URL}/firmware/${firmware.id}/download/firmware_bootloader`, '_blank');
-      } else if ((fileType === "firmware" && firmware.firmware_string)  || (fileType === "firmware_hex" && !firmware.firmware_string_hex)) {
-        window.open(`${config.API_BASE_URL}/firmware/${firmware.id}/download/firmware_file`, '_blank');
-      }
-      else if (fileType === "firmware_hex" && firmware.firmware_string_hex) {
-        window.open(`${config.API_BASE_URL}/firmware/${firmware.id}/download/firmware_hex`, '_blank');
-      }else {
+      let downloadFileType = '';
+      
+      // Map the fileType to the correct backend parameter
+      if (fileType === "firmware_hex" && firmware.firmware_string_hex) {
+        downloadFileType = 'hex';
+      } else if (fileType === "firmware" && firmware.firmware_string) {
+        downloadFileType = 'bin';
+      } else if (fileType === "bootloader" && firmware.firmware_string_bootloader) {
+        downloadFileType = 'bootloader';
+      } else {
         toast({
           title: "Download failed",
           description: "No firmware file available to download",
           variant: "destructive",
         });
+        return;
       }
+
+      window.open(`${config.API_BASE_URL}/firmware/${firmware.id}/download/${downloadFileType}`, '_blank');
     } catch (err: any) {
       console.error("Firmware download error:", err);
       toast({
@@ -203,6 +208,37 @@ const FirmwarePage = () => {
       firmware.firmware_version.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (firmware.description && firmware.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Add function to get firmware type priority for sorting
+  const getFirmwareTypePriority = (type: string | null | undefined) => {
+    switch (type?.toLowerCase()) {
+      case "stable":
+        return 1;
+      case "beta":
+        return 2;
+      case "legacy":
+        return 3;
+      case "deprecated":
+        return 4;
+      default:
+        return 5; // Unknown types go last
+    }
+  };
+
+  // Sort filtered firmware versions by type priority, then by creation date (newest first)
+  const sortedFirmwareVersions = [...filteredFirmwareVersions].sort((a, b) => {
+    const priorityA = getFirmwareTypePriority(a.firmware_type);
+    const priorityB = getFirmwareTypePriority(b.firmware_type);
+    
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // If same priority, sort by created_at (newest first)
+    const dateA = new Date(a.created_at || 0).getTime();
+    const dateB = new Date(b.created_at || 0).getTime();
+    return dateB - dateA;
+  });
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "N/A";
@@ -285,13 +321,16 @@ const FirmwarePage = () => {
     setIsUpdatingType(true);
     
     try {
-      const formData = new FormData();
-      formData.append("firmwareVersion", selectedFirmware.firmware_version);
-      formData.append("firmware_type", editedFirmwareType);
-      
-      const response = await axios.post(
-        `${config.API_BASE_URL}/firmware/updatefirmware_type`,
-        formData
+      const response = await axios.patch(
+        `${config.API_BASE_URL}/firmware/${selectedFirmware.id}`,
+        {
+          firmware_type: editedFirmwareType
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
       
       if (response.status === 200) {
@@ -301,20 +340,17 @@ const FirmwarePage = () => {
           variant: "default",
         });
         
-        // Update local state
-        setSelectedFirmware({
-          ...selectedFirmware,
-          firmware_type: editedFirmwareType as "stable" | "beta" | "deprecated" | "legacy"
-        });
+        // Update local state with the response data
+        setSelectedFirmware(response.data);
         
         // Refresh the firmware list
         refetch();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating firmware type:", err);
       toast({
         title: "Update failed",
-        description: err.response?.data?.message || "Failed to update firmware type",
+        description: err.response?.data?.detail || "Failed to update firmware type",
         variant: "destructive",
       });
     } finally {
@@ -581,9 +617,9 @@ const FirmwarePage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredFirmwareVersions.length === 0 ? (
+                  {sortedFirmwareVersions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-96"> {/* Use colSpan equal to number of columns */}
+                      <TableCell colSpan={7} className="h-96">
                         <div className="flex flex-col items-center justify-center h-full">
                           <HardDrive className="h-12 w-12 text-gray-400" />
                           <h3 className="mt-4 text-lg font-medium text-gray-900"> No Firmware</h3>
@@ -595,7 +631,7 @@ const FirmwarePage = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredFirmwareVersions.map((firmware) => (
+                    sortedFirmwareVersions.map((firmware) => (
                       <TableRow key={firmware.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center">
@@ -929,6 +965,7 @@ const FirmwarePage = () => {
                   variant="outline"
                   onClick={() => handleDownload(selectedFirmware, "firmware_hex")}
                   className="px-4"
+                  disabled={!selectedFirmware.firmware_string_hex}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Hex File
@@ -937,6 +974,7 @@ const FirmwarePage = () => {
                   variant="outline"
                   onClick={() => handleDownload(selectedFirmware, "firmware")}
                   className="px-4"
+                  disabled={!selectedFirmware.firmware_string}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Bin File
@@ -945,6 +983,7 @@ const FirmwarePage = () => {
                   variant="outline"
                   onClick={() => handleDownload(selectedFirmware, "bootloader")}
                   className="px-4"
+                  disabled={!selectedFirmware.firmware_string_bootloader}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Bootloader File
