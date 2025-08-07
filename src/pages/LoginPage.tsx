@@ -8,6 +8,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import config from "@/config";
+import { Eye, EyeOff } from "lucide-react"; // Add icon imports
 
 interface LoginForm {
   email: string;
@@ -27,6 +28,7 @@ const LoginPage = () => {
     password: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Add state
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -111,24 +113,39 @@ const LoginPage = () => {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="username"
                 type="email"
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 required
+                autoComplete="username"
               />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  required
+                  autoComplete="current-password" // Helps browser password managers
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-2 p-1 text-gray-500"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <Button 
