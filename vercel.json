@@ -2,7 +2,7 @@
     "rewrites": [
       {
         "source": "/api/:path*",
-        "destination": "https://www.gibsonalx.mooo.com/:path*"
+        "destination": "https://www.gibsonalx.mooo.com/api/:path*"
       }
     ],
     "headers": [
