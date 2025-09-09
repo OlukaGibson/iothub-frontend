@@ -2,7 +2,7 @@
     "rewrites": [
       {
         "source": "/api/:path*",
-        "destination": "http://34.123.255.161/:path*"
+        "destination": "https://www.gibsonalx.mooo.com/:path*"
       }
     ],
     "headers": [
