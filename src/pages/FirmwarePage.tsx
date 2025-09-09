@@ -373,7 +373,7 @@ const FirmwarePage = () => {
                 <Upload className="mr-2 h-4 w-4" /> Upload Firmware
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Upload New Firmware</DialogTitle>
                 <DialogDescription>
@@ -823,7 +823,7 @@ const FirmwarePage = () => {
         </Card> */}
       </div>
       <Dialog open={detailsDialog} onOpenChange={setDetailsDialog}>
-        <DialogContent className="sm:max-w-[700px]">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Firmware Details</DialogTitle>
             <DialogDescription>

@@ -15,22 +15,24 @@ import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 // Define interfaces for the device data
 interface DeviceMetadataEntry {
-  entryID: string;
+  entryID: any; // Can be string or number depending on API
   created_at: string;
   [key: string]: any; // For field1, field2, etc.
 }
 
 interface DeviceConfigEntry {
-  entryID: string;
+  entryID: any; // Can be string or number depending on API
   created_at: string;
   [key: string]: any; // For config1, config2, etc.
 }
 
 interface DeviceProfile {
-  id: number;
+  id: string;
   name: string;
   description: string;
   created_at: string;
@@ -70,6 +72,12 @@ const DeviceDetailPage = () => {
   // Add state for config form
   const [configValues, setConfigValues] = useState<Record<string, string>>({});
   const [isSubmittingConfig, setIsSubmittingConfig] = useState(false);
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+
+  // Initialize form for config updates
+  const form = useForm<Record<string, string>>({
+    defaultValues: {}
+  });
   
   // Fetch device data
   const { 
@@ -90,6 +98,40 @@ const DeviceDetailPage = () => {
     enabled: !!deviceID,
   });
 
+  // Fetch profile data for config form
+  const { 
+    data: profileData,
+    isLoading: isProfileLoading,
+  } = useQuery({
+    queryKey: ['profile', deviceData?.profile],
+    queryFn: async () => {
+      try {
+        const response = await axios.get(`${config.API_BASE_URL}/profiles/${deviceData?.profile}`);
+        return response.data as DeviceProfile;
+      } catch (error) {
+        throw new Error("Failed to fetch profile data");
+      }
+    },
+    enabled: !!deviceData?.profile,
+  });
+
+  // Initialize form with current config values when data is available
+  useEffect(() => {
+    if (deviceData?.config_data && deviceData.config_data.length > 0) {
+      const latestConfig = deviceData.config_data[0]; // Get the most recent config
+      const formValues: Record<string, string> = {};
+      
+      Object.keys(latestConfig).forEach(key => {
+        if (key !== 'entryID' && key !== 'created_at') {
+          formValues[key] = latestConfig[key] || '';
+        }
+      });
+      
+      form.reset(formValues);
+      setConfigValues(formValues);
+    }
+  }, [deviceData?.config_data, form]);
+
   const handleRefresh = () => {
     refetch();
     toast({
@@ -98,8 +140,7 @@ const DeviceDetailPage = () => {
     });
   };
 
-  const handleConfigSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConfigSubmit = async (formData: Record<string, string>) => {
     if (!deviceID) return;
     
     setIsSubmittingConfig(true);
@@ -107,7 +148,7 @@ const DeviceDetailPage = () => {
     try {
       const configData = {
         deviceID: parseInt(deviceID),
-        configs: configValues
+        configs: formData
       };
       
       await axios.post(`${config.API_BASE_URL}/config/update`, configData);
@@ -120,8 +161,8 @@ const DeviceDetailPage = () => {
       // Refresh data to show the new config
       refetch();
       
-      // Reset form
-      setConfigValues({});
+      // Close dialog
+      setConfigDialogOpen(false);
     } catch (error) {
       toast({
         title: "Update Failed",
@@ -385,38 +426,85 @@ const DeviceDetailPage = () => {
                           View configuration values for this device
                         </CardDescription>
                       </div>
-                      <Dialog>
+                      <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
                         <DialogTrigger asChild>
                           <Button variant="outline">
                             <Settings className="h-4 w-4 mr-2" />
                             Update Config
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <form onSubmit={handleConfigSubmit}>
-                            <DialogHeader>
-                              <DialogTitle>Update Device Configuration</DialogTitle>
-                              <DialogDescription>
-                                Make changes to your device configuration here. Click save when you're done.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              {/* Since profile is now a string, we'll need to handle configs differently */}
-                              <div className="text-sm text-gray-600">
-                                Configuration update interface needs profile data to determine available configs.
-                              </div>
+                        <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col">
+                          <DialogHeader>
+                            <DialogTitle>Update Device Configuration</DialogTitle>
+                            <DialogDescription>
+                              Make changes to your device configuration here. Click save when you're done.
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          {isProfileLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                              <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
                             </div>
-                            <DialogFooter>
-                              <Button type="submit" disabled={isSubmittingConfig}>
-                                {isSubmittingConfig ? (
-                                  <>
-                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                    Saving...
-                                  </>
-                                ) : "Save changes"}
-                              </Button>
-                            </DialogFooter>
-                          </form>
+                          ) : profileData?.configs && Object.keys(profileData.configs).length > 0 ? (
+                            <Form {...form}>
+                              <form onSubmit={form.handleSubmit(handleConfigSubmit)} className="flex flex-col flex-1 min-h-0">
+                                <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-2">
+                                  {Object.entries(profileData.configs).map(([configKey, configLabel]) => (
+                                    <FormField
+                                      key={configKey}
+                                      control={form.control}
+                                      name={configKey}
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <div className="flex items-center space-x-4">
+                                            <div className="flex-shrink-0 w-32">
+                                              <FormLabel className="text-sm font-medium">{configLabel}</FormLabel>
+                                            </div>
+                                            <div className="flex-1">
+                                              <FormControl>
+                                                <Input 
+                                                  placeholder={`Enter value for ${configLabel}...`}
+                                                  {...field}
+                                                />
+                                              </FormControl>
+                                            </div>
+                                            <div className="flex-shrink-0 w-16 text-right">
+                                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                {configKey}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </FormItem>
+                                      )}
+                                    />
+                                  ))}
+                                </div>
+                                
+                                <DialogFooter className="pt-4 border-t bg-white">
+                                  <Button 
+                                    variant="outline" 
+                                    type="button" 
+                                    onClick={() => setConfigDialogOpen(false)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button type="submit" disabled={isSubmittingConfig}>
+                                    {isSubmittingConfig ? (
+                                      <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        Saving...
+                                      </>
+                                    ) : "Save changes"}
+                                  </Button>
+                                </DialogFooter>
+                              </form>
+                            </Form>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <Settings className="h-10 w-10 mx-auto mb-2" />
+                              <p>No configuration fields available for this device profile.</p>
+                            </div>
+                          )}
                         </DialogContent>
                       </Dialog>
                     </div>

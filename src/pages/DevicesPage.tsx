@@ -63,6 +63,29 @@ interface Profile {
   device_count?: number;
 }
 
+interface FirmwareVersion {
+  id: string; // UUID in FastAPI
+  organisation_id: string; // UUID
+  firmware_version: string;
+  firmware_type?: "stable" | "beta" | "deprecated" | "legacy" | null;
+  description?: string | null;
+  change1?: string | null;
+  change2?: string | null;
+  change3?: string | null;
+  change4?: string | null;
+  change5?: string | null;
+  change6?: string | null;
+  change7?: string | null;
+  change8?: string | null;
+  change9?: string | null;
+  change10?: string | null;
+  firmware_string: string;
+  firmware_string_hex?: string | null;
+  firmware_string_bootloader?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Define the form state interface
 interface DeviceForm {
   name: string;
@@ -70,6 +93,40 @@ interface DeviceForm {
   profile: string;
   currentFirmwareVersion: string;
 }
+
+// Helper function to get firmware type badge styles
+const getFirmwareTypeBadge = (type: string | null | undefined) => {
+  if (!type) return null;
+  
+  switch (type.toLowerCase()) {
+    case "stable":
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Stable</Badge>;
+    case "beta":
+      return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Beta</Badge>;
+    case "deprecated":
+      return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Deprecated</Badge>;
+    case "legacy":
+      return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Legacy</Badge>;
+    default:
+      return <Badge variant="outline">{type}</Badge>;
+  }
+};
+
+// Helper function to get firmware type priority for sorting
+const getFirmwareTypePriority = (type: string | null | undefined) => {
+  switch (type?.toLowerCase()) {
+    case "stable":
+      return 1;
+    case "beta":
+      return 2;
+    case "legacy":
+      return 3;
+    case "deprecated":
+      return 4;
+    default:
+      return 5; // Unknown types go last
+  }
+};
 
 const DevicesPage = () => {
   const navigate = useNavigate();
@@ -106,7 +163,7 @@ const DevicesPage = () => {
   const devices = Array.isArray(devicesData) ? devicesData : [];
   const [updateFirmwareDialog, setUpdateFirmwareDialog] = useState(false);
   // Fetch firmware versions for the dropdown ONLY when dialog is open
-  const { data: firmwareVersionsData = [] } = useQuery({
+  const { data: firmwareVersionsData = [] } = useQuery<FirmwareVersion[]>({
     queryKey: ['firmwares'],
     queryFn: async () => {
       const response = await axios.get(`${config.API_BASE_URL}/firmware`);
@@ -116,7 +173,22 @@ const DevicesPage = () => {
   });
 
   // Ensure firmwareVersions is always an array
-  const firmwareVersions = Array.isArray(firmwareVersionsData) ? firmwareVersionsData : [];
+  const firmwareVersions: FirmwareVersion[] = Array.isArray(firmwareVersionsData) ? firmwareVersionsData : [];
+
+  // Sort firmware versions by type priority, then by creation date (newest first)
+  const sortedFirmwareVersions = [...firmwareVersions].sort((a, b) => {
+    const priorityA = getFirmwareTypePriority(a.firmware_type);
+    const priorityB = getFirmwareTypePriority(b.firmware_type);
+    
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // If same priority, sort by created_at (newest first)
+    const dateA = new Date(a.created_at || 0).getTime();
+    const dateB = new Date(b.created_at || 0).getTime();
+    return dateB - dateA;
+  });
 
   // Fetch profiles using React Query ONLY when dialog is open
   const { data: profilesData = [] } = useQuery({
@@ -345,7 +417,7 @@ const handleFirmwareUpdate = async () => {
       `${config.API_BASE_URL}/device/${selectedDeviceForUpdate.deviceID}/update_firmware`,
       {
         firmwareID: selectedFirmwareId,
-        firmwareVersion: selectedFirmware.firmwareVersion
+        firmwareVersion: selectedFirmware.firmware_version
       }
     );
     
@@ -473,12 +545,15 @@ const openFirmwareUpdateDialog = (device: Device) => {
                       <SelectValue placeholder="Select firmware version" />
                     </SelectTrigger>
                     <SelectContent>
-                      {firmwareVersions.map((firmware) => (
+                      {sortedFirmwareVersions.map((firmware) => (
                         <SelectItem 
                           key={firmware.id} 
                           value={firmware.id.toString()}
                         >
-                          {firmware.firmwareVersion}
+                          <div className="flex items-center space-x-2">
+                            <span>{firmware.firmware_version}</span>
+                            {getFirmwareTypeBadge(firmware.firmware_type)}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -733,7 +808,7 @@ const openFirmwareUpdateDialog = (device: Device) => {
 
         <div className="space-y-2">
   <Label htmlFor="firmwareVersion">Select Target Firmware Version</Label>
-  {firmwareVersions.length === 0 ? (
+  {sortedFirmwareVersions.length === 0 ? (
     <div className="flex items-center space-x-2 py-2">
       <svg className="animate-spin h-4 w-4 text-gray-500" viewBox="0 0 24 24">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -750,13 +825,15 @@ const openFirmwareUpdateDialog = (device: Device) => {
         <SelectValue placeholder="Select a firmware version" />
       </SelectTrigger>
       <SelectContent>
-        {firmwareVersions.map((firmware) => (
+        {sortedFirmwareVersions.map((firmware) => (
           <SelectItem 
             key={firmware.id} 
             value={firmware.id.toString()}
           >
-            {firmware.firmwareVersion} 
-            {firmware.firmware_type && ` (${firmware.firmware_type})`}
+            <div className="flex items-center space-x-2">
+              <span>{firmware.firmware_version}</span>
+              {getFirmwareTypeBadge(firmware.firmware_type)}
+            </div>
           </SelectItem>
         ))}
       </SelectContent>
