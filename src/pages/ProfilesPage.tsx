@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import config from "@/config";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -87,7 +87,7 @@ const ProfilesPage = () => {
     queryKey: ['profiles'],
     queryFn: async () => {
       // Use the correct endpoint from your API
-      const response = await axios.get(`${config.API_BASE_URL}/profiles`);
+      const response = await api.get('/profiles');
       return response.data as Profile[];
     },
     // Enable the query to fetch data
@@ -258,7 +258,7 @@ const ProfilesPage = () => {
         organisation_id: "00000000-0000-0000-0000-000000000000" // TODO: Get from auth context
       };
       
-      const response = await axios.post(`${config.API_BASE_URL}/profiles`, profileData);
+      const response = await api.post('/profiles', profileData);
       
       toast({
         title: "Success",

@@ -25,7 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Users, Mail, Calendar } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 import config from "@/config";
 
 interface User {
@@ -72,7 +72,7 @@ const UsersPage = () => {
   const { data: users = [], isLoading, refetch } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/users`);
+      const response = await api.get('/users');
       return response.data || [];
     }
   });
@@ -102,7 +102,7 @@ const UsersPage = () => {
         ...(formData.organisation_name && { organisation_name: formData.organisation_name })
       };
 
-      const response = await axios.post(`${config.API_BASE_URL}/users`, userData);
+      const response = await api.post('/users', userData);
 
       toast({
         title: "Success",

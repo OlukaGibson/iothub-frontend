@@ -26,7 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Building2, Mail, Calendar } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 import config from "@/config";
 
 interface Organisation {
@@ -62,7 +62,7 @@ const OrganisationsPage = () => {
   const { data: organisations = [], isLoading, refetch } = useQuery({
     queryKey: ['organisations'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/organisations`);
+      const response = await api.get('/organisations');
       return response.data || [];
     }
   });
@@ -92,7 +92,7 @@ const OrganisationsPage = () => {
         is_active: true
       };
 
-      const response = await axios.post(`${config.API_BASE_URL}/organisations`, orgData);
+      const response = await api.post('/organisations', orgData);
 
       toast({
         title: "Success",

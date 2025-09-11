@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Box, HardDrive, Upload, Activity, Zap, Thermometer, Droplets } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 import config from "@/config";
 import { useQuery } from "@tanstack/react-query";
 
@@ -31,7 +31,7 @@ const DashboardPage = () => {
   const { data: devices = [], isLoading: devicesLoading } = useQuery({
     queryKey: ['devices'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/device`);
+      const response = await api.get('/device');
       return response.data || [];
     }
   });
@@ -40,7 +40,7 @@ const DashboardPage = () => {
   const { data: profiles = [], isLoading: profilesLoading } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/profiles`);
+      const response = await api.get('/profiles');
       return response.data || [];
     }
   });
@@ -49,7 +49,7 @@ const DashboardPage = () => {
   const { data: firmware = [], isLoading: firmwareLoading } = useQuery({
     queryKey: ['firmware'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/firmware`);
+      const response = await api.get('/firmware');
       return response.data || [];
     }
   });

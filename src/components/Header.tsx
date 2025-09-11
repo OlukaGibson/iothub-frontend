@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import axios from "axios";
+import api from "@/lib/api";
 import config from "@/config";
 import {
   DropdownMenu,
@@ -22,7 +22,7 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       // Call logout endpoint
-      await axios.post(`${config.API_BASE_URL}/logout`);
+      await api.post('/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

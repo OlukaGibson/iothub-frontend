@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useRef, useState, useEffect } from "react";
 import config from "@/config";
-import axios from "axios";
+import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -98,7 +98,7 @@ const FirmwarePage = () => {
   const { data: firmwareVersions = [], isLoading: isLoadingFirmware, error: firmwareError, refetch } = useQuery({
     queryKey: ['firmwares'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/firmware`);
+      const response = await api.get('/firmware');
       return response.data as FirmwareVersion[];
     }
   });
@@ -141,7 +141,7 @@ const FirmwarePage = () => {
     });
   
     try {
-      const response = await axios.post(`${config.API_BASE_URL}/firmware/upload`, formData, {
+      const response = await api.post('/firmware/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -282,7 +282,7 @@ const FirmwarePage = () => {
     setDetailsDialog(true);
     
     try {
-      const response = await axios.get(`${config.API_BASE_URL}/firmware/${firmwareId}`);
+      const response = await api.get(`/firmware/${firmwareId}`);
       setSelectedFirmware(response.data);
     } catch (err: any) {
       console.error("Error fetching firmware details:", err);
@@ -321,8 +321,8 @@ const FirmwarePage = () => {
     setIsUpdatingType(true);
     
     try {
-      const response = await axios.patch(
-        `${config.API_BASE_URL}/firmware/${selectedFirmware.id}`,
+      const response = await api.patch(
+        `/firmware/${selectedFirmware.id}`,
         {
           firmware_type: editedFirmwareType
         },

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChevronLeft, Download, RefreshCw, ExternalLink, Box, Activity, Settings, AlertTriangle } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 import config from "@/config";
 import { useToast } from "@/components/ui/use-toast";
 import { DeviceDataGraphs } from "@/components/DeviceDataGraphs";
@@ -89,7 +89,7 @@ const DeviceDetailPage = () => {
     queryKey: ['device', deviceID],
     queryFn: async () => {
       try {
-        const response = await axios.get(`${config.API_BASE_URL}/device/${deviceID}`);
+        const response = await api.get(`/device/${deviceID}`);
         return response.data as DeviceDetail;
       } catch (error) {
         throw new Error("Failed to fetch device data");
@@ -106,7 +106,7 @@ const DeviceDetailPage = () => {
     queryKey: ['profile', deviceData?.profile],
     queryFn: async () => {
       try {
-        const response = await axios.get(`${config.API_BASE_URL}/profiles/${deviceData?.profile}`);
+        const response = await api.get(`/profiles/${deviceData?.profile}`);
         return response.data as DeviceProfile;
       } catch (error) {
         throw new Error("Failed to fetch profile data");
@@ -151,7 +151,7 @@ const DeviceDetailPage = () => {
         configs: formData
       };
       
-      await axios.post(`${config.API_BASE_URL}/config/update`, configData);
+      await api.post('/config/update', configData);
       
       toast({
         title: "Configuration Updated",

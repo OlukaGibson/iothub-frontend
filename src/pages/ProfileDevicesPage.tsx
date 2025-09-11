@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api";
 import config from "@/config";
 import {
   ChevronLeft,
@@ -93,7 +93,7 @@ const ProfileDevicesPage = () => {
   } = useQuery({
     queryKey: ['profile', profileId],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/profiles/${profileId}`);
+      const response = await api.get(`/profiles/${profileId}`);
       return response.data as ProfileDetails;
     },
     enabled: !!profileId,
@@ -116,8 +116,8 @@ const ProfileDevicesPage = () => {
         config_values: configValues
       };
 
-      const response = await axios.post(
-        `${config.API_BASE_URL}/config/mass_edit`, 
+      const response = await api.post(
+        '/config/mass_edit', 
         payload
       );
       return response.data;

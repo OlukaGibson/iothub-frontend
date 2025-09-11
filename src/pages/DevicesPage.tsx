@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, RefreshCw, Download, WifiOff, Wifi } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import config from "@/config";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -154,7 +154,7 @@ const DevicesPage = () => {
   const { data: devicesData = [], isLoading, error, refetch } = useQuery({
     queryKey: ['devices'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/device`);
+      const response = await api.get('/device');
       return response.data || [];
     }
   });
@@ -166,7 +166,7 @@ const DevicesPage = () => {
   const { data: firmwareVersionsData = [] } = useQuery<FirmwareVersion[]>({
     queryKey: ['firmwares'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/firmware`);
+      const response = await api.get('/firmware');
       return response.data || [];
     },
     enabled: newDeviceDialog || updateFirmwareDialog // Enable when either dialog is open
@@ -194,7 +194,7 @@ const DevicesPage = () => {
   const { data: profilesData = [] } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/profiles`);
+      const response = await api.get('/profiles');
       return response.data || [];
     },
     enabled: newDeviceDialog // Only fetch when dialog is open
@@ -264,7 +264,7 @@ const DevicesPage = () => {
     };
     
     try {
-      const response = await axios.post(`${config.API_BASE_URL}/device`, submitData);
+      const response = await api.post('/device', submitData);
       
       toast({
         title: "Success",
@@ -308,7 +308,7 @@ const DevicesPage = () => {
       queryClient.prefetchQuery({
         queryKey: ['profiles'],
         queryFn: async () => {
-          const response = await axios.get(`${config.API_BASE_URL}/profiles`);
+          const response = await api.get('/profiles');
           return response.data || [];
         }
       });
@@ -316,7 +316,7 @@ const DevicesPage = () => {
       queryClient.prefetchQuery({
         queryKey: ['firmwares'],
         queryFn: async () => {
-          const response = await axios.get(`${config.API_BASE_URL}/firmware`);
+          const response = await api.get('/firmware');
           return response.data || [];
         }
       });
@@ -413,8 +413,8 @@ const handleFirmwareUpdate = async () => {
       throw new Error("Selected firmware not found");
     }
     
-    const response = await axios.post(
-      `${config.API_BASE_URL}/device/${selectedDeviceForUpdate.deviceID}/update_firmware`,
+    const response = await api.post(
+      `/device/${selectedDeviceForUpdate.deviceID}/update_firmware`,
       {
         firmwareID: selectedFirmwareId,
         firmwareVersion: selectedFirmware.firmware_version
@@ -456,7 +456,7 @@ const openFirmwareUpdateDialog = (device: Device) => {
   queryClient.prefetchQuery({
     queryKey: ['firmwares'],
     queryFn: async () => {
-      const response = await axios.get(`${config.API_BASE_URL}/firmware`);
+      const response = await api.get('/firmware');
       return response.data || [];
     }
   });
