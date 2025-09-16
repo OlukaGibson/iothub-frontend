@@ -28,6 +28,7 @@ interface DeviceMetadataEntry {
 interface DeviceConfigEntry {
   entryID: any; // Can be string or number depending on API
   created_at: string;
+  config_updated?: boolean;
   [key: string]: any; // For config1, config2, etc.
 }
 
@@ -184,8 +185,13 @@ const DeviceDetailPage = () => {
     // Get all keys except entryID and created_at
     Object.keys(sampleEntry).forEach(key => {
       if (key !== 'entryID' && key !== 'created_at') {
-        // Use the provided name mapping if available, otherwise use a friendly generated name
-        fieldDefs[key] = nameMapping?.[key] || key.replace(/([a-z])([0-9])/i, '$1 $2').replace(/^./, str => str.toUpperCase());
+        // Special handling for config_updated field
+        if (key === 'config_updated') {
+          fieldDefs[key] = 'Config Updated';
+        } else {
+          // Use the provided name mapping if available, otherwise use a friendly generated name
+          fieldDefs[key] = nameMapping?.[key] || key.replace(/([a-z])([0-9])/i, '$1 $2').replace(/^./, str => str.toUpperCase());
+        }
       }
     });
     
@@ -421,7 +427,17 @@ const DeviceDetailPage = () => {
                   <CardHeader>
                     <div className="flex justify-between items-center">
                       <div>
-                        <CardTitle>Device Configuration</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <CardTitle>Device Configuration</CardTitle>
+                          {deviceData.config_data && deviceData.config_data.length > 0 && deviceData.config_data[0].config_updated !== undefined && (
+                            <Badge 
+                              variant={deviceData.config_data[0].config_updated ? "default" : "secondary"}
+                              className={deviceData.config_data[0].config_updated ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}
+                            >
+                              {deviceData.config_data[0].config_updated ? "Updated" : "Not Updated"}
+                            </Badge>
+                          )}
+                        </div>
                         <CardDescription>
                           View configuration values for this device
                         </CardDescription>
@@ -510,10 +526,26 @@ const DeviceDetailPage = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
+                    {deviceData.config_data && deviceData.config_data.length > 0 && deviceData.config_data[0].config_updated !== undefined && (
+                      <div className="mb-4 p-3 rounded-lg border bg-gray-50">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${deviceData.config_data[0].config_updated ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                          <span className="text-sm font-medium">Configuration Status:</span>
+                          <span className="text-sm">
+                            {deviceData.config_data[0].config_updated 
+                              ? "Device has received and applied the latest configuration" 
+                              : "Configuration update pending or not yet applied"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     {deviceData.config_data.length > 0 ? (
                       <div className="space-y-4">
                         <DeviceDataTable 
-                          dataEntries={deviceData.config_data} 
+                          dataEntries={deviceData.config_data.map(entry => ({
+                            ...entry,
+                            config_updated: entry.config_updated === true ? 'Yes' : entry.config_updated === false ? 'No' : 'Unknown'
+                          }))} 
                           fieldDefinitions={getFieldDefinitions(deviceData.config_data, deviceData.config_names)}
                         />
                       </div>

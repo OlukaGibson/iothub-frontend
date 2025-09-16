@@ -49,6 +49,7 @@ import { useForm } from "react-hook-form";
 
 interface DeviceConfig {
   [key: string]: string;
+  config_updated?: boolean;
 }
 
 interface Device {
@@ -123,8 +124,6 @@ const ProfileDevicesPage = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      console.log('Success response:', data); // Add logging
-      
       // Handle different response formats
       const successCount = data?.results?.success?.length || 
                           data?.success?.length || 
@@ -140,9 +139,6 @@ const ProfileDevicesPage = () => {
       refetch();
     },
     onError: (error: any) => {
-      console.error('Mutation error:', error); // Add detailed logging
-      console.error('Error response:', error?.response?.data); // Log API error details
-      
       // Check if it's actually a success but misformatted response
       if (error?.response?.status === 200 || error?.response?.status === 201) {
         toast({
@@ -265,6 +261,27 @@ const ProfileDevicesPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{profileData?.devices?.length || 0}</div>
+            {profileData?.devices && profileData.devices.length > 0 && (() => {
+              const updatedCount = profileData.devices.filter(d => d.recent_config?.config_updated === true).length;
+              const pendingCount = profileData.devices.filter(d => d.recent_config?.config_updated === false).length;
+              const unknownCount = profileData.devices.filter(d => d.recent_config?.config_updated === null || d.recent_config?.config_updated === undefined).length;
+              
+              return (
+                <div className="flex gap-2 mt-2">
+                  <Badge className="bg-green-100 text-green-800 text-xs">
+                    {updatedCount} Updated
+                  </Badge>
+                  <Badge className="bg-gray-100 text-gray-600 text-xs">
+                    {pendingCount} Pending
+                  </Badge>
+                  {unknownCount > 0 && (
+                    <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                      {unknownCount} Unknown
+                    </Badge>
+                  )}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
         
@@ -403,6 +420,7 @@ const ProfileDevicesPage = () => {
                   </TableHead>
                   <TableHead>Device Name</TableHead>
                   <TableHead>Device ID</TableHead>
+                  <TableHead>Config Status</TableHead>
                   {profileData && Object.values(profileData.configs).map((configName, index) => (
                     <TableHead key={index}>{configName}</TableHead>
                   ))}
@@ -424,6 +442,18 @@ const ProfileDevicesPage = () => {
                       <code className="px-2 py-1 bg-gray-100 rounded text-gray-800 text-xs">
                         {device.deviceID}
                       </code>
+                    </TableCell>
+                    <TableCell>
+                      {device.recent_config?.config_updated !== undefined && device.recent_config?.config_updated !== null ? (
+                        <Badge 
+                          variant={device.recent_config.config_updated ? "default" : "secondary"}
+                          className={device.recent_config.config_updated ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}
+                        >
+                          {device.recent_config.config_updated ? "Updated" : "Not Updated"}
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Unknown</span>
+                      )}
                     </TableCell>
                     
                     {/* Display each configuration value in its own cell */}
