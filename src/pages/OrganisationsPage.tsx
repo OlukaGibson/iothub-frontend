@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Building2, Mail, Calendar } from "lucide-react";
+import { Plus, Building2, Mail, Calendar, Copy, Check } from "lucide-react";
 import api from "@/lib/api";
 import config from "@/config";
 
@@ -48,6 +48,7 @@ interface OrganisationForm {
 
 const OrganisationsPage = () => {
   const [newOrgDialog, setNewOrgDialog] = useState(false);
+  const [copiedTokens, setCopiedTokens] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState<OrganisationForm>({
     name: "",
     description: "",
@@ -69,6 +70,34 @@ const OrganisationsPage = () => {
 
   const handleFormChange = (field: keyof OrganisationForm, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const copyToClipboard = async (token: string, orgId: string) => {
+    try {
+      await navigator.clipboard.writeText(token);
+      setCopiedTokens(prev => new Set(prev).add(orgId));
+      
+      toast({
+        title: "Copied!",
+        description: "Organisation token copied to clipboard",
+        variant: "default",
+      });
+
+      // Reset copied state after 2 seconds
+      setTimeout(() => {
+        setCopiedTokens(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(orgId);
+          return newSet;
+        });
+      }, 2000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy token to clipboard",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddOrganisation = async () => {
@@ -267,9 +296,23 @@ const OrganisationsPage = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {org.token.substring(0, 8)}...
-                        </code>
+                        <div className="flex items-center space-x-2">
+                          <code className="text-xs bg-muted px-2 py-1 rounded flex-1">
+                            {org.token.substring(0, 8)}...
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyToClipboard(org.token, org.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            {copiedTokens.has(org.id) ? (
+                              <Check className="h-3 w-3 text-green-600" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

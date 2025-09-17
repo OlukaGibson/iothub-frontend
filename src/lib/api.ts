@@ -37,4 +37,10 @@ api.interceptors.response.use(
   }
 );
 
+// API functions
+export const getUserProfile = async (userId: string) => {
+  const response = await api.get(`/users/${userId}`);
+  return response.data;
+};
+
 export default api;

@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Bell, Settings, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import api from "@/lib/api";
+import api, { getUserProfile } from "@/lib/api";
 import config from "@/config";
+import ProfileDialog from "@/components/ProfileDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +20,9 @@ const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, logout } = useAuth();
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -37,6 +42,34 @@ const Header = () => {
     }
   };
 
+  const handleProfileClick = async () => {
+    if (!user?.user_id) {
+      toast({
+        title: "Error",
+        description: "User ID not available",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoadingProfile(true);
+    setIsProfileDialogOpen(true);
+    
+    try {
+      const profileData = await getUserProfile(user.user_id);
+      setUserProfile(profileData);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to load profile",
+        variant: "destructive"
+      });
+      console.error('Profile fetch error:', error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
       <div className="flex items-center">
@@ -49,10 +82,19 @@ const Header = () => {
           <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-iot-red"></span>
         </Button>
 
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full"
+          onClick={handleProfileClick}
+        >
+          <User className="h-5 w-5" />
+        </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5" />
+              <Settings className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
@@ -66,10 +108,6 @@ const Header = () => {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
@@ -81,6 +119,16 @@ const Header = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ProfileDialog
+        isOpen={isProfileDialogOpen}
+        onClose={() => {
+          setIsProfileDialogOpen(false);
+          setUserProfile(null);
+        }}
+        userProfile={userProfile}
+        isLoading={isLoadingProfile}
+      />
     </header>
   );
 };
